@@ -7,7 +7,7 @@ on:
         description: "Optional date YYYY-MM-DD"
         required: false
         type: string
-schedule:
+  schedule:
   - cron: "0 9 * * *"
     timezone: "America/Toronto"
 permissions:
