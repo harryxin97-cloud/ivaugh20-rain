@@ -7,12 +7,15 @@ on:
         description: "Optional date YYYY-MM-DD"
         required: false
         type: string
-
   schedule:
     - cron: "15 6,8 * * *"
 
 permissions:
   contents: write
+
+concurrency:
+  group: ivaugh20-rain-capture
+  cancel-in-progress: false
 
 jobs:
   capture:
@@ -34,21 +37,32 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Capture precipitation
-        env:
-          TARGET_DATE: ${{ github.event.inputs.target_date }}
+      - name: Capture scheduled precipitation
+        if: ${{ github.event_name == 'schedule' }}
         run: npm run scrape
+
+      - name: Capture manual precipitation
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          TARGET_DATE: ${{ inputs.target_date }}
+        run: npm run scrape
+
+      - name: Verify generated files
+        run: |
+          test -s data/history.json
+          test -s data/latest.json
 
       - name: Save result
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add data/
+          git add data/history.json data/latest.json
 
           if git diff --cached --quiet; then
-            echo "No data changes"
-          else
-            git commit -m "Update IVAUGH20 precipitation"
-            git push
+            echo "::error::Scrape finished but no data files changed."
+            exit 1
           fi
+
+          git commit -m "Update IVAUGH20 precipitation"
+          git push
