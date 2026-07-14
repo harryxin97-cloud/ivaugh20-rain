@@ -7,9 +7,11 @@ on:
         description: "Optional date YYYY-MM-DD"
         required: false
         type: string
+
   schedule:
-  - cron: "0 9 * * *"
-    timezone: "America/Toronto"
+    - cron: "30 9 * * *"
+      timezone: "America/Toronto"
+
 permissions:
   contents: write
 
