@@ -1,0 +1,11 @@
+{
+  "name": "ivaugh20-rain",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "scrape": "node scrape.mjs"
+  },
+  "dependencies": {
+    "playwright": "latest"
+  }
+}
