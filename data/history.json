@@ -177,6 +177,14 @@
       "precipitationMm": 0,
       "sourceUrl": "https://www.wunderground.com/dashboard/pws/IVAUGH20/graph/2026-08-01/2026-08-01/daily",
       "capturedAt": "2026-08-02T10:20:38.888Z"
+    },
+    "2026-08-02": {
+      "date": "2026-08-02",
+      "stationId": "IVAUGH20",
+      "precipitationIn": 0.75,
+      "precipitationMm": 19.05,
+      "sourceUrl": "https://www.wunderground.com/dashboard/pws/IVAUGH20/graph/2026-08-02/2026-08-02/daily",
+      "capturedAt": "2026-08-03T13:57:33.227Z"
     }
   }
 }
