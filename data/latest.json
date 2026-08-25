@@ -1,8 +1,8 @@
 {
-  "date": "2026-08-23",
+  "date": "2026-08-24",
   "stationId": "IVAUGH20",
-  "precipitationIn": 0.45,
-  "precipitationMm": 11.43,
-  "sourceUrl": "https://www.wunderground.com/dashboard/pws/IVAUGH20/graph/2026-08-23/2026-08-23/daily",
-  "capturedAt": "2026-08-24T05:02:58.229Z"
+  "precipitationIn": 0.03,
+  "precipitationMm": 0.762,
+  "sourceUrl": "https://www.wunderground.com/dashboard/pws/IVAUGH20/graph/2026-08-24/2026-08-24/daily",
+  "capturedAt": "2026-08-25T04:55:09.820Z"
 }
