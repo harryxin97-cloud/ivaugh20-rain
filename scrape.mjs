@@ -104,11 +104,44 @@ try {
     );
   }
 
-  const match = bodyText.match(
+  const dailySummary = bodyText.match(
+    /Daily\s+Summary[\s\S]{0,12000}/i,
+  )?.[0];
+
+  // 新版页面使用 “Precipitation (in) / Actual / ...” 表格；
+  // 旧版页面仍使用 “Precipitation 0.12 in”。
+  const modernMatch = dailySummary?.match(
+    /Precipitation\s*\(in\)\s*Actual\s*Historic Avg\.\s*Record[\s\S]{0,2000}?\bPrecipitation\s+([0-9]+(?:\.[0-9]+)?)(?=\s|$)/i,
+  );
+
+  const legacyMatch = bodyText.match(
     /Summary[\s\S]{0,8000}?Precipitation\s+([0-9]+(?:\.[0-9]+)?)\s*(?:°\s*)?in\b/i,
   );
 
+  const match = modernMatch || legacyMatch;
+
   if (!match) {
+    const precipitationIndex = bodyText.search(
+      /Precipitation/i,
+    );
+
+    const precipitationContext =
+      precipitationIndex >= 0
+        ? bodyText
+            .slice(
+              Math.max(0, precipitationIndex - 300),
+              precipitationIndex + 1500,
+            )
+            .replace(/\s+/g, " ")
+        : "<not found>";
+
+    console.error(
+      `Parse diagnostics: bodyLength=${bodyText.length}, dailySummary=${Boolean(dailySummary)}, precipitationLabel=${precipitationIndex >= 0}, noData=${/\bNo data\b/i.test(bodyText)}`,
+    );
+    console.error(
+      `Precipitation context: ${precipitationContext}`,
+    );
+
     throw new Error(
       "没有读取到明确的 Daily Summary Precipitation 数字，不记录为 0",
     );
