@@ -6,6 +6,6 @@
     "scrape": "node scrape.mjs"
   },
   "dependencies": {
-    "playwright": "latest"
+    "playwright": "1.62.1"
   }
 }
