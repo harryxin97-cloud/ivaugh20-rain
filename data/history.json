@@ -489,6 +489,22 @@
       "precipitationMm": 0.508,
       "sourceUrl": "https://www.wunderground.com/dashboard/pws/IVAUGH20/graph/2026-09-09/2026-09-09/daily",
       "capturedAt": "2026-09-10T13:37:09.644Z"
+    },
+    "2026-09-10": {
+      "date": "2026-09-10",
+      "stationId": "IVAUGH20",
+      "precipitationIn": 0.07,
+      "precipitationMm": 1.778,
+      "sourceUrl": "https://www.wunderground.com/dashboard/pws/IVAUGH20/graph/2026-09-10/2026-09-10/daily",
+      "capturedAt": "2026-09-14T03:05:29.660Z"
+    },
+    "2026-09-12": {
+      "date": "2026-09-12",
+      "stationId": "IVAUGH20",
+      "precipitationIn": 0,
+      "precipitationMm": 0,
+      "sourceUrl": "https://www.wunderground.com/dashboard/pws/IVAUGH20/graph/2026-09-12/2026-09-12/daily",
+      "capturedAt": "2026-09-14T03:08:17.174Z"
     }
   }
 }
