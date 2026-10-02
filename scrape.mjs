@@ -39,6 +39,20 @@ function parseDailyResponse(rawUrl, body) {
   if (typeof total!=='number' || !Number.isFinite(total) || total<0) throw new Error(`Invalid daily precipitation for ${date}`);
   return {date,precipitationMm:units==='m'?total:Number((total*25.4).toFixed(3)),precipitationIn:units==='e'?total:Number((total/25.4).toFixed(3))};
 }
+
+function dailySummaryUrl(rawUrl, targetDate) {
+  const source=new URL(rawUrl);
+  const allowed=['/v2/pws/observations/current','/v2/pws/observations/all/1day','/v2/pws/history/all','/v2/pws/history/daily'];
+  if (source.hostname!=='api.weather.com' || !allowed.includes(source.pathname) || source.searchParams.get('stationId')!==STATION_ID || !source.searchParams.get('apiKey')) return null;
+  const units=source.searchParams.get('units');
+  if (!['m','e'].includes(units)) return null;
+  const url=new URL('https://api.weather.com/v2/pws/history/daily');
+  // Match the legacy site's inch total so metric rounding cannot change
+  // stored precision when the site switches versions or display units.
+  url.search=new URLSearchParams({stationId:STATION_ID,date:validateDate(targetDate).replaceAll('-',''),units:'e',format:'json',numericPrecision:'decimal',apiKey:source.searchParams.get('apiKey')}).toString();
+  return url.toString();
+}
+
 function latestRecord(records) {
   const dates=Object.keys(records).sort();
   if (!dates.length) throw new Error('No history records');
@@ -65,14 +79,17 @@ try {
     const page=await context.newPage();
     page.setDefaultTimeout(30000);
     const summaries=new Map(), diagnostics=[];
+    let dailyRequestUrl=null;
+    page.on('request',request=>{
+      // Reuse only the site's own PWS API key in memory; never persist it.
+      const candidate=dailySummaryUrl(request.url(),targetDate);
+      if (candidate) dailyRequestUrl=candidate;
+    });
     page.on('response',async response=>{
       const endpoint=new URL(response.url());
-      if (['xhr','fetch'].includes(response.request().resourceType()) && /weather|wunderground/.test(endpoint.hostname)) {
-        console.log('Data request: '+JSON.stringify({host:endpoint.hostname,path:endpoint.pathname,status:response.status(),params:[...endpoint.searchParams.keys()]}));
-      }
-      if (endpoint.hostname!=='api.weather.com' || endpoint.pathname!=='/v2/pws/history/daily') return;
+      if (endpoint.hostname!=='api.weather.com' || !['/v2/pws/history/daily','/v2/pws/history/all'].includes(endpoint.pathname)) return;
       // Only record non-secret diagnostics, never the site's API key.
-      diagnostics.push({status:response.status(),startDate:endpoint.searchParams.get('startDate'),endDate:endpoint.searchParams.get('endDate'),units:endpoint.searchParams.get('units')});
+      diagnostics.push({endpoint:endpoint.pathname,date:endpoint.searchParams.get('date'),status:response.status(),startDate:endpoint.searchParams.get('startDate'),endDate:endpoint.searchParams.get('endDate'),units:endpoint.searchParams.get('units')});
       try {
         if (!response.ok()) return;
         const summary=parseDailyResponse(response.url(),await response.json());
@@ -120,7 +137,27 @@ try {
       // A changed title alone is insufficient on the new site. Require the
       // exact day's validated response so a stale table cannot be saved.
       const deadline=Date.now()+60000;
-      while (!summaries.has(targetDate) && Date.now()<deadline) await sleep(250);
+      let requestedDaily=false;
+      while (!summaries.has(targetDate) && Date.now()<deadline) {
+        // The new site may use history/all for its chart and never request
+        // history/daily. Ask explicitly for the exact completed day's summary.
+        if (dailyRequestUrl && !requestedDaily) {
+          requestedDaily=true;
+          console.log(`Requesting explicit daily summary for ${targetDate}`);
+          try {
+            const response=await context.request.get(dailyRequestUrl,{timeout:30000});
+            diagnostics.push({endpoint:'/v2/pws/history/daily',date:targetDate,status:response.status(),explicit:true});
+            if (response.ok()) {
+              const summary=parseDailyResponse(dailyRequestUrl,await response.json());
+              if (summary?.date===targetDate) summaries.set(targetDate,summary);
+            }
+          } catch {
+            // Request errors can include URLs containing the site's API key.
+            diagnostics.push({error:'Explicit daily summary request failed'});
+          }
+        }
+        if (!summaries.has(targetDate)) await sleep(250);
+      }
       if (!summaries.has(targetDate)) throw new Error(`No valid daily response for ${targetDate}`);
       if (isNewSite ? parsePageDate(await label.innerText())!==targetDate : !(await legacyLabel.isVisible())) throw new Error('Displayed date changed during capture');
       result=summaries.get(targetDate);
