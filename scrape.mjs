@@ -67,6 +67,9 @@ try {
     const summaries=new Map(), diagnostics=[];
     page.on('response',async response=>{
       const endpoint=new URL(response.url());
+      if (['xhr','fetch'].includes(response.request().resourceType()) && /weather|wunderground/.test(endpoint.hostname)) {
+        console.log('Data request: '+JSON.stringify({host:endpoint.hostname,path:endpoint.pathname,status:response.status(),params:[...endpoint.searchParams.keys()]}));
+      }
       if (endpoint.hostname!=='api.weather.com' || endpoint.pathname!=='/v2/pws/history/daily') return;
       // Only record non-secret diagnostics, never the site's API key.
       diagnostics.push({status:response.status(),startDate:endpoint.searchParams.get('startDate'),endDate:endpoint.searchParams.get('endDate'),units:endpoint.searchParams.get('units')});
